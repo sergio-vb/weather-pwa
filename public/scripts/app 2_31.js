@@ -105,9 +105,16 @@
       app.container.appendChild(card);
       app.visibleCards[data.key] = card;
     }
+
+    // Verify data is newer than what we already have, if not, bail.
+    var dateElem = card.querySelector('.date');
+    if (dateElem.getAttribute('data-dt') >= data.currently.time) {
+      return;
+    }
+
+    dateElem.setAttribute('data-dt', data.currently.time);
+    dateElem.textContent = new Date(data.currently.time * 1000);
     card.querySelector('.description').textContent = data.currently.summary;
-    card.querySelector('.date').textContent =
-      new Date(data.currently.time * 1000);
     card.querySelector('.current .icon').classList.add(data.currently.icon);
     card.querySelector('.current .temperature .value').textContent =
       Math.round(data.currently.temperature);
@@ -193,31 +200,29 @@
     window.localforage.setItem('selectedCities', app.selectedCities);
   };
 
-  document.addEventListener('DOMContentLoaded', function(){
-    window.localforage.getItem('selectedCities', function(err, cityList){
-      if (cityList){
+  document.addEventListener('DOMContentLoaded', function() {
+    window.localforage.getItem('selectedCities', function(err, cityList) {
+      if (cityList) {
         app.selectedCities = cityList;
-        app.selectedCities.forEach(function(city){
+        app.selectedCities.forEach(function(city) {
           app.getForecast(city.key, city.label);
         });
-      }else{
+      } else {
         app.updateForecastCard(injectedForecast);
         app.selectedCities = [
           {key: injectedForecast.key, label: injectedForecast.label}
         ];
         app.saveSelectedCities();
       }
-    });
+    });    
   });
-  
-  if ('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(
-        function(registration){
-          console.log('Service Worker Registered', registration);
-        }
-      );
-  }
 
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+     .register('/service-worker.js')
+     .then(function() { 
+        console.log('Service Worker Registered'); 
+      });
+  }
 
 })();
